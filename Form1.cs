@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -13,9 +14,14 @@ namespace PrometheusExporterInstaller
 {
     public partial class Form1 : Form
     {
+        private bool detailsVisible = false;
+        private int normalHeight;
+
         public Form1()
         {
             InitializeComponent();
+            normalHeight = this.ClientSize.Height;
+            this.Icon = new Icon("Icon2.ico");
         }
 
         private async void InstallButton_Click(object sender, EventArgs e)
@@ -28,7 +34,7 @@ namespace PrometheusExporterInstaller
             string installerUrl = await GetLatestInstallerUrlAsync();
             if (string.IsNullOrEmpty(installerUrl))
             {
-                OutputTextBox.AppendText("Failed to find the latest installer URL.\n");
+                OutputTextBox.AppendText("Failed to find the latest installer URL.\r\n");
                 return;
             }
 
@@ -45,13 +51,13 @@ namespace PrometheusExporterInstaller
                     }
                     else
                     {
-                        OutputTextBox.AppendText("Exiting script as the exporter is already installed.\n");
+                        OutputTextBox.AppendText("Exiting script as the exporter is already installed.\r\n");
                         return;
                     }
                 }
                 else
                 {
-                    OutputTextBox.AppendText("windows_exporter service is not installed.\n");
+                    OutputTextBox.AppendText("windows_exporter service is not installed.\r\n");
                 }
 
                 DialogResult createConfig = MessageBox.Show("Do you want to use a custom config file?", "Create Config File", MessageBoxButtons.YesNo);
@@ -69,7 +75,7 @@ namespace PrometheusExporterInstaller
                         if (removeConfig == DialogResult.Yes)
                         {
                             File.Delete(filePath);
-                            OutputTextBox.AppendText("Existing config file removed.\n");
+                            OutputTextBox.AppendText("Existing config file removed.\r\n");
                         }
                     }
                 }
@@ -78,7 +84,7 @@ namespace PrometheusExporterInstaller
             }
             else
             {
-                OutputTextBox.AppendText("Installer not found. Please ensure the installer is downloaded correctly.\n");
+                OutputTextBox.AppendText("Installer not found. Please ensure the installer is downloaded correctly.\r\n");
             }
         }
 
@@ -90,11 +96,11 @@ namespace PrometheusExporterInstaller
             bool customConfigUsed = CreateConfigFile(filePath, folderPath);
             if (customConfigUsed)
             {
-                OutputTextBox.AppendText("Custom config file created.\n");
+                OutputTextBox.AppendText("Custom config file created.\r\n");
             }
             else
             {
-                OutputTextBox.AppendText("Failed to create custom config file.\n");
+                OutputTextBox.AppendText("Failed to create custom config file.\r\n");
             }
         }
 
@@ -108,9 +114,11 @@ namespace PrometheusExporterInstaller
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; WindowsExporterInstaller/1.0)");
                 try
                 {
-                    var response = await client.GetStringAsync(apiUrl);
-                    JObject release = JObject.Parse(response);
+                    OutputTextBox.AppendText($"Sending request to GitHub API: {apiUrl}\r\n");
+                    var response = await client.GetAsync(apiUrl);
+                    response.EnsureSuccessStatusCode();
 
+                    JObject release = JObject.Parse(await response.Content.ReadAsStringAsync());
                     var assets = release["assets"];
                     foreach (var asset in assets)
                     {
@@ -121,10 +129,23 @@ namespace PrometheusExporterInstaller
                             break;
                         }
                     }
+
+                    if (!string.IsNullOrEmpty(downloadUrl))
+                    {
+                        OutputTextBox.AppendText("Found download URL.\r\n");
+                    }
+                    else
+                    {
+                        OutputTextBox.AppendText("Failed to find a suitable download URL in the response.\r\n");
+                    }
+                }
+                catch (HttpRequestException httpEx)
+                {
+                    OutputTextBox.AppendText($"HTTP Request error: {httpEx.Message}\r\n");
                 }
                 catch (Exception ex)
                 {
-                    OutputTextBox.AppendText($"An error occurred while retrieving the latest installer URL: {ex.Message}\n");
+                    OutputTextBox.AppendText($"An error occurred while retrieving the latest installer URL: {ex.Message}\r\n");
                 }
             }
 
@@ -137,7 +158,7 @@ namespace PrometheusExporterInstaller
             {
                 try
                 {
-                    OutputTextBox.AppendText($"Downloading installer from {url}...\n");
+                    OutputTextBox.AppendText($"Downloading installer from {url}...\r\n");
                     var response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
@@ -146,11 +167,11 @@ namespace PrometheusExporterInstaller
                         await response.Content.CopyToAsync(fs);
                     }
 
-                    OutputTextBox.AppendText($"Downloaded installer to {outputPath}\n");
+                    OutputTextBox.AppendText($"Downloaded installer to {outputPath}\r\n");
                 }
                 catch (Exception ex)
                 {
-                    OutputTextBox.AppendText($"An error occurred while downloading the installer: {ex.Message}\n");
+                    OutputTextBox.AppendText($"An error occurred while downloading the installer: {ex.Message}\r\n");
                 }
             }
         }
@@ -165,7 +186,7 @@ namespace PrometheusExporterInstaller
         {
             if (!IsServiceInstalled("windows_exporter"))
             {
-                OutputTextBox.AppendText("The windows_exporter service is not installed.\n");
+                OutputTextBox.AppendText("The windows_exporter service is not installed.\r\n");
                 return;
             }
 
@@ -174,18 +195,18 @@ namespace PrometheusExporterInstaller
                 ServiceController service = new ServiceController("windows_exporter");
                 if (service.Status != ServiceControllerStatus.Stopped)
                 {
-                    OutputTextBox.AppendText("Stopping the windows_exporter service...\n");
+                    OutputTextBox.AppendText("Stopping the windows_exporter service...\r\n");
                     service.Stop();
                     service.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMinutes(1));
-                    OutputTextBox.AppendText("Service stopped.\n");
+                    OutputTextBox.AppendText("Service stopped.\r\n");
                 }
             }
             catch (Exception ex)
             {
-                OutputTextBox.AppendText($"Failed to stop the service: {ex.Message}\n");
+                OutputTextBox.AppendText($"Failed to stop the service: {ex.Message}\r\n");
             }
 
-            OutputTextBox.AppendText("Uninstalling, please wait...\n");
+            OutputTextBox.AppendText("Uninstalling, please wait...\r\n");
             var uninstallProcess = Process.Start(new ProcessStartInfo("sc", "delete windows_exporter")
             {
                 UseShellExecute = true,
@@ -194,11 +215,11 @@ namespace PrometheusExporterInstaller
             uninstallProcess.WaitForExit();
             if (uninstallProcess.ExitCode == 0)
             {
-                OutputTextBox.AppendText("Exporter uninstalled.\n");
+                OutputTextBox.AppendText("Exporter uninstalled.\r\n");
             }
             else
             {
-                OutputTextBox.AppendText($"Failed to uninstall the exporter. Exit code: {uninstallProcess.ExitCode}\n");
+                OutputTextBox.AppendText($"Failed to uninstall the exporter. Exit code: {uninstallProcess.ExitCode}\r\n");
             }
         }
 
@@ -237,15 +258,15 @@ namespace PrometheusExporterInstaller
                 string startServiceCommand = "start windows_exporter";
                 RunCommand("sc.exe", startServiceCommand);
 
-                OutputTextBox.AppendText("Exporter installed and service started successfully.\n");
+                OutputTextBox.AppendText("Exporter installed and service started successfully.\r\n");
             }
             catch (UnauthorizedAccessException)
             {
-                OutputTextBox.AppendText("Access to the path is denied. Please run the application as an administrator.\n");
+                OutputTextBox.AppendText("Access to the path is denied. Please run the application as an administrator.\r\n");
             }
             catch (Exception ex)
             {
-                OutputTextBox.AppendText($"An error occurred while installing the exporter: {ex.Message}\n");
+                OutputTextBox.AppendText($"An error occurred while installing the exporter: {ex.Message}\r\n");
             }
         }
 
@@ -266,7 +287,7 @@ namespace PrometheusExporterInstaller
             }
             catch (Exception ex)
             {
-                OutputTextBox.AppendText($"An error occurred while stopping the service: {ex.Message}\n");
+                OutputTextBox.AppendText($"An error occurred while stopping the service: {ex.Message}\r\n");
             }
 
             var uninstallProcess = Process.Start(new ProcessStartInfo("sc", $"delete {serviceName}")
@@ -314,7 +335,7 @@ namespace PrometheusExporterInstaller
 
             if (process.ExitCode != 0)
             {
-                throw new InvalidOperationException($"PowerShell command failed with exit code {process.ExitCode}: {error}");
+                throw new InvalidOperationException($"PowerShell command failed with exit code {process.ExitCode}: {error}\r\n");
             }
 
             OutputTextBox.AppendText(output);
@@ -322,46 +343,16 @@ namespace PrometheusExporterInstaller
 
         private bool CreateConfigFile(string filePath, string folderPath)
         {
-            if (File.Exists(filePath))
-            {
-                DialogResult dialogResult = MessageBox.Show($"A config file already exists at {filePath}. Do you want to overwrite the existing config file?", "Overwrite Config", MessageBoxButtons.YesNo);
-                if (dialogResult == DialogResult.No)
-                {
-                    OutputTextBox.AppendText("Using the existing config file.\n");
-                    return true;
-                }
-                else
-                {
-                    File.Delete(filePath);
-                    OutputTextBox.AppendText("Existing config file removed.\n");
-                }
-            }
+            var selectedServices = listBoxServicesSelected.Items.Cast<string>().ToList();
+            var selectedProcesses = listBoxProcessesSelected.Items.Cast<string>().ToList();
 
-            DialogResult modifyCollectorsResult = MessageBox.Show("Do you want to modify the list of enabled collectors defaults (cpu,cs,logical_disk,net,os,physical_disk,process,service,system,textfile)?", "Modify Collectors", MessageBoxButtons.YesNo);
-            string enabledCollectors = "cpu,cs,logical_disk,net,os,physical_disk,process,service,system,textfile";
-            if (modifyCollectorsResult == DialogResult.Yes)
-            {
-                enabledCollectors = PromptForInput("Enter the collectors you want to enable (comma-separated), or press Enter to use defaults:");
-                if (string.IsNullOrEmpty(enabledCollectors))
-                {
-                    enabledCollectors = "cpu,cs,logical_disk,net,os,physical_disk,process,service,system,textfile";
-                }
-            }
-
-            var services = ServiceController.GetServices().Select(s => s.ServiceName).ToList();
-            string serviceNames = PromptForInput("Enter the service names from the list (comma-separated for multiple services):", services);
-
-            var formattedServiceNames = string.Join(" OR ", serviceNames.Split(',').Select(s => $"Name='{s.Trim()}'"));
-
-            var processes = Process.GetProcesses().Select(p => p.ProcessName).Distinct().ToList();
-            string processIncludes = PromptForInput("Enter the process names from the list (comma-separated for multiple processes):", processes);
-
-            var formattedProcessIncludes = string.Join("|", processIncludes.Split(',').Select(p => p.Trim()));
+            var formattedServiceNames = string.Join(" OR ", selectedServices.Select(s => $"Name='{s}'"));
+            var formattedProcessIncludes = string.Join("|", selectedProcesses);
 
             string configContent = $@"
 ---
 collectors:
-  enabled: {enabledCollectors}
+  enabled: cpu,cs,logical_disk,net,os,physical_disk,process,service,system,textfile
 collector:
   service:
     services-where: {formattedServiceNames}
@@ -383,50 +374,81 @@ web:
                 if (!Directory.Exists(folderPath))
                 {
                     Directory.CreateDirectory(folderPath);
-                    OutputTextBox.AppendText($"Folder created at {folderPath}\n");
+                    OutputTextBox.AppendText($"Folder created at {folderPath}\r\n");
                 }
                 else
                 {
-                    OutputTextBox.AppendText($"Folder exists at {folderPath}\n");
+                    OutputTextBox.AppendText($"Folder exists at {folderPath}\r\n");
                 }
 
                 File.WriteAllText(filePath, configContent);
-                OutputTextBox.AppendText($"File created at {filePath} with the provided configuration\n");
+                OutputTextBox.AppendText($"File created at {filePath} with the provided configuration\r\n");
                 return true;
             }
             catch (UnauthorizedAccessException)
             {
-                OutputTextBox.AppendText("Access to the path is denied. Please run the application as an administrator.\n");
+                OutputTextBox.AppendText("Access to the path is denied. Please run the application as an administrator.\r\n");
                 return false;
             }
             catch (Exception ex)
             {
-                OutputTextBox.AppendText($"An error occurred while creating the config file: {ex.Message}\n");
+                OutputTextBox.AppendText($"An error occurred while creating the config file: {ex.Message}\r\n");
                 return false;
             }
         }
 
-        private string PromptForInput(string message, List<string> options = null)
+        private void ButtonAddService_Click(object sender, EventArgs e)
         {
-            string input = Microsoft.VisualBasic.Interaction.InputBox(message, "Input Required", "");
-
-            if (options != null)
-            {
-                foreach (var option in options)
-                {
-                    OutputTextBox.AppendText($"{option}\n");
-                }
-            }
-
-            return input;
+            MoveSelectedItem(listBoxServicesAvailable, listBoxServicesSelected);
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void ButtonRemoveService_Click(object sender, EventArgs e)
         {
+            MoveSelectedItem(listBoxServicesSelected, listBoxServicesAvailable);
+        }
 
+        private void ButtonAddProcess_Click(object sender, EventArgs e)
+        {
+            MoveSelectedItem(listBoxProcessesAvailable, listBoxProcessesSelected);
+        }
+
+        private void ButtonRemoveProcess_Click(object sender, EventArgs e)
+        {
+            MoveSelectedItem(listBoxProcessesSelected, listBoxProcessesAvailable);
+        }
+
+        private void MoveSelectedItem(ListBox source, ListBox destination)
+        {
+            if (source.SelectedItem != null)
+            {
+                destination.Items.Add(source.SelectedItem);
+                source.Items.Remove(source.SelectedItem);
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
+        {
+            var services = ServiceController.GetServices().Select(s => s.ServiceName).OrderBy(name => name).ToList();
+            var processes = Process.GetProcesses().Select(p => p.ProcessName).Distinct().OrderBy(name => name).ToList();
+
+            listBoxServicesAvailable.Items.AddRange(services.ToArray());
+            listBoxProcessesAvailable.Items.AddRange(processes.ToArray());
+        }
+
+        private void UninstallButton_Click(object sender, EventArgs e)
+        {
+            UninstallExporter();
+        }
+
+        private void DetailsButton_Click(object sender, EventArgs e)
+        {
+            detailsVisible = !detailsVisible;
+            OutputTextBox.Visible = detailsVisible;
+            DetailsButton.Text = detailsVisible ? "Hide Details" : "Show Details";
+            this.ClientSize = new System.Drawing.Size(this.ClientSize.Width, detailsVisible ? normalHeight + 200 : normalHeight);
+        }
+
+        private void OutputTextBox_TextChanged(object sender, EventArgs e)
         {
 
         }
