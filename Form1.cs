@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.ServiceProcess;
@@ -21,11 +21,69 @@ namespace PrometheusExporterInstaller
         {
             InitializeComponent();
             normalHeight = this.ClientSize.Height;
-            this.Icon = new Icon("Icon2.ico");
+            this.Icon = new Icon("wei.ico");
+        }
+
+        private async Task DownloadAndExtractJsonPackageAsync()
+        {
+            string jsonPackageUrl = $"https://www.nuget.org/api/v2/package/Newtonsoft.Json/13.0.3";
+            string jsonPackagePath = Path.Combine(Path.GetTempPath(), "Newtonsoft.Json.nupkg");
+            string jsonDllPath = Path.Combine(Application.StartupPath, "Newtonsoft.Json.dll");
+
+            if (File.Exists(jsonDllPath))
+            {
+                OutputTextBox.AppendText($"Newtonsoft.Json.dll already exists at {jsonDllPath}\r\n");
+                return;
+            }
+
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    OutputTextBox.AppendText($"Downloading Newtonsoft.Json package from {jsonPackageUrl}...\r\n");
+                    var response = await client.GetAsync(jsonPackageUrl);
+                    response.EnsureSuccessStatusCode();
+
+                    using (var fs = new FileStream(jsonPackagePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await response.Content.CopyToAsync(fs);
+                    }
+
+                    OutputTextBox.AppendText($"Downloaded Newtonsoft.Json package to {jsonPackagePath}\r\n");
+
+                    using (var zipArchive = ZipFile.OpenRead(jsonPackagePath))
+                    {
+                        var entry = zipArchive.Entries
+                            .FirstOrDefault(e => e.FullName.Equals("lib/net45/Newtonsoft.Json.dll", StringComparison.OrdinalIgnoreCase));
+
+                        if (entry != null)
+                        {
+                            string tempPath = Path.Combine(Path.GetTempPath(), entry.Name);
+                            entry.ExtractToFile(tempPath, true);
+                            File.Move(tempPath, jsonDllPath);
+                            File.SetAttributes(jsonDllPath, FileAttributes.Hidden);
+                            OutputTextBox.AppendText($"Extracted Newtonsoft.Json.dll to {jsonDllPath}\r\n");
+                        }
+                        else
+                        {
+                            OutputTextBox.AppendText("Newtonsoft.Json.dll for net45 not found in the package.\r\n");
+                        }
+                    }
+                }
+                catch (HttpRequestException httpEx)
+                {
+                    OutputTextBox.AppendText($"HTTP Request error: {httpEx.Message}\r\n");
+                }
+                catch (Exception ex)
+                {
+                    OutputTextBox.AppendText($"An error occurred while downloading and extracting Newtonsoft.Json package: {ex.Message}\r\n");
+                }
+            }
         }
 
         private async void InstallButton_Click(object sender, EventArgs e)
         {
+            await DownloadAndExtractJsonPackageAsync();
             string folderPath = @"C:\Program Files\windows_exporter";
             string configFileName = "config.yml";
             string filePath = Path.Combine(folderPath, configFileName);
