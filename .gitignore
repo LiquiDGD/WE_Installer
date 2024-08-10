@@ -1,0 +1,28 @@
+# Ignore the bin and obj directories
+bin/
+obj/
+
+# Ignore user-specific files
+*.user
+*.suo
+
+# Ignore build results
+*.exe
+*.dll
+*.pdb
+
+# Ignore NuGet packages
+packages/
+*.nupkg
+# Uncomment if needed
+#*.snupkg
+
+# Ignore the .vs folder (Visual Studio temporary files)
+.vs/
+
+# Ignore any log files
+*.log
+
+# Ignore Mac and Linux file system files
+.DS_Store
+
