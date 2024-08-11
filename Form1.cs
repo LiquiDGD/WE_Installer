@@ -21,7 +21,6 @@ namespace PrometheusExporterInstaller
         {
             InitializeComponent();
             normalHeight = this.ClientSize.Height;
-           // this.Icon = new Icon("wei.ico");
         }
 
         private async Task DownloadAndExtractJsonPackageAsync()
@@ -146,7 +145,7 @@ namespace PrometheusExporterInstaller
             }
         }
 
-        private async void CreateConfigButton_Click(object sender, EventArgs e)
+        private void CreateConfigButton_Click(object sender, EventArgs e)
         {
             string folderPath = @"C:\Program Files\windows_exporter";
             string filePath = Path.Combine(folderPath, "config.yml");
@@ -251,13 +250,24 @@ namespace PrometheusExporterInstaller
             try
             {
                 ServiceController service = new ServiceController("windows_exporter");
-                if (service.Status != ServiceControllerStatus.Stopped)
+
+                OutputTextBox.AppendText($"Service status before stopping: {service.Status}\r\n");
+
+                if (service.Status != ServiceControllerStatus.Stopped && service.Status != ServiceControllerStatus.StopPending)
                 {
                     OutputTextBox.AppendText("Stopping the windows_exporter service...\r\n");
                     service.Stop();
                     service.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMinutes(1));
                     OutputTextBox.AppendText("Service stopped.\r\n");
                 }
+                else
+                {
+                    OutputTextBox.AppendText("Service is already stopped or stopping.\r\n");
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                OutputTextBox.AppendText($"Invalid operation while stopping the service: {ex.Message}\r\n");
             }
             catch (Exception ex)
             {
@@ -332,32 +342,69 @@ namespace PrometheusExporterInstaller
         {
             try
             {
-                ServiceController service = new ServiceController(serviceName);
-                if (service.Status != ServiceControllerStatus.Stopped)
+                // Check if the service exists
+                if (!CheckServiceInstalled(serviceName))
                 {
+                    OutputTextBox.AppendText($"Service '{serviceName}' does not exist.\r\n");
+                    return;
+                }
+
+                ServiceController service = new ServiceController(serviceName);
+
+                // Attempt to stop the service if it's running or in a pending state
+                if (service.Status != ServiceControllerStatus.Stopped && service.Status != ServiceControllerStatus.StopPending)
+                {
+                    OutputTextBox.AppendText($"Stopping the '{serviceName}' service...\r\n");
                     service.Stop();
                     service.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMinutes(1));
+                    OutputTextBox.AppendText("Service stopped successfully.\r\n");
+                }
+                else
+                {
+                    OutputTextBox.AppendText($"Service '{serviceName}' is already stopped.\r\n");
                 }
             }
             catch (InvalidOperationException)
             {
-                // Service does not exist
+                // Service does not exist, or other operation errors
+                OutputTextBox.AppendText($"Service '{serviceName}' does not exist or could not be managed.\r\n");
+                return;
             }
             catch (Exception ex)
             {
                 OutputTextBox.AppendText($"An error occurred while stopping the service: {ex.Message}\r\n");
+                return;
             }
 
+            // Attempt to delete the service
+            OutputTextBox.AppendText($"Uninstalling the '{serviceName}' service...\r\n");
             var uninstallProcess = Process.Start(new ProcessStartInfo("sc", $"delete {serviceName}")
             {
                 UseShellExecute = true,
                 Verb = "runas"
             });
             uninstallProcess.WaitForExit();
-            if (uninstallProcess.ExitCode != 0 && uninstallProcess.ExitCode != 1060)
+
+            // Check the exit code and provide feedback
+            if (uninstallProcess.ExitCode == 0)
             {
+                OutputTextBox.AppendText($"Service '{serviceName}' uninstalled successfully.\r\n");
+            }
+            else if (uninstallProcess.ExitCode == 1060)
+            {
+                OutputTextBox.AppendText($"Service '{serviceName}' does not exist or was already removed.\r\n");
+            }
+            else
+            {
+                OutputTextBox.AppendText($"Failed to uninstall the service '{serviceName}'. Exit code: {uninstallProcess.ExitCode}\r\n");
                 throw new InvalidOperationException($"Command 'sc delete {serviceName}' failed with exit code {uninstallProcess.ExitCode}");
             }
+        }
+
+        // Helper method to check if a service is installed
+        private bool CheckServiceInstalled(string serviceName)
+        {
+            return ServiceController.GetServices().Any(s => s.ServiceName.Equals(serviceName, StringComparison.OrdinalIgnoreCase));
         }
 
         private void RunCommand(string executable, string arguments)
