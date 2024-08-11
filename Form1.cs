@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -448,6 +449,14 @@ namespace PrometheusExporterInstaller
 
         private bool CreateConfigFile(string filePath, string folderPath)
         {
+            // Full list of collectors
+            var selectedCollectors = checkedListBoxCollectors.CheckedItems.Cast<string>().ToList();
+            var defaultCollectors = new List<string> { "cpu", "cs", "logical_disk", "net", "os", "physical_disk", "process", "service", "system", "textfile" };
+
+            // Ensure default collectors are included
+            selectedCollectors.AddRange(defaultCollectors.Except(selectedCollectors));
+
+            // Service and process sections
             var selectedServices = listBoxServicesSelected.Items.Cast<string>().ToList();
             var selectedProcesses = listBoxProcessesSelected.Items.Cast<string>().ToList();
 
@@ -457,7 +466,7 @@ namespace PrometheusExporterInstaller
             string configContent = $@"
 ---
 collectors:
-  enabled: cpu,cs,logical_disk,net,os,physical_disk,process,service,system,textfile
+  enabled: {string.Join(",", selectedCollectors)}
 collector:
   service:
     services-where: {formattedServiceNames}
@@ -538,6 +547,25 @@ web:
 
             listBoxServicesAvailable.Items.AddRange(services.ToArray());
             listBoxProcessesAvailable.Items.AddRange(processes.ToArray());
+
+            // Full list of collectors to show in CheckedListBox
+            string[] allCollectors = {
+                "ad", "adcs", "adfs", "cache", "cpu", "cpu_info", "cs", "container", "diskdrive", "dfsr", "dhcp",
+                "dns", "exchange", "fsrmquota", "hyperv", "iis", "license", "logical_disk", "logon", "memory",
+                "mscluster_cluster", "mscluster_network", "mscluster_node", "mscluster_resource", "mscluster_resourcegroup",
+                "msmq", "mssql", "netframework_clrexceptions", "netframework_clrinterop", "netframework_clrjit",
+                "netframework_clrloading", "netframework_clrlocksandthreads", "netframework_clrmemory", "netframework_clrremoting",
+                "netframework_clrsecurity", "net", "os", "physical_disk", "printer", "process", "remote_fx", "scheduled_task",
+                "service", "smb", "smbclient", "smtp", "system", "tcp", "teradici_pcoip", "time", "thermalzone",
+                "terminal_services", "textfile", "vmware_blast", "vmware"
+            };
+
+            string[] defaultCollectors = { "cpu", "cs", "logical_disk", "net", "os", "physical_disk", "process", "service", "system", "textfile" };
+
+            foreach (var collector in allCollectors)
+            {
+                checkedListBoxCollectors.Items.Add(collector, defaultCollectors.Contains(collector));
+            }
         }
 
         private void UninstallButton_Click(object sender, EventArgs e)

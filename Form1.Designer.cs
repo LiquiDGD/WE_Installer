@@ -9,7 +9,6 @@
         private System.Windows.Forms.Button UninstallButton;
         private System.Windows.Forms.Button DetailsButton;
 
-        // New controls
         private System.Windows.Forms.ListBox listBoxServicesAvailable;
         private System.Windows.Forms.ListBox listBoxServicesSelected;
         private System.Windows.Forms.Button buttonAddService;
@@ -18,6 +17,9 @@
         private System.Windows.Forms.ListBox listBoxProcessesSelected;
         private System.Windows.Forms.Button buttonAddProcess;
         private System.Windows.Forms.Button buttonRemoveProcess;
+
+        // CheckedListBox for collectors
+        private System.Windows.Forms.CheckedListBox checkedListBoxCollectors;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -50,12 +52,13 @@
             this.listBoxProcessesSelected = new System.Windows.Forms.ListBox();
             this.buttonAddProcess = new System.Windows.Forms.Button();
             this.buttonRemoveProcess = new System.Windows.Forms.Button();
+            this.checkedListBoxCollectors = new System.Windows.Forms.CheckedListBox();
             this.SuspendLayout();
             // 
             // InstallButton
             // 
             this.InstallButton.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.InstallButton.Location = new System.Drawing.Point(10, 4);
+            this.InstallButton.Location = new System.Drawing.Point(8, 4);
             this.InstallButton.Margin = new System.Windows.Forms.Padding(2);
             this.InstallButton.Name = "InstallButton";
             this.InstallButton.Size = new System.Drawing.Size(150, 24);
@@ -67,7 +70,7 @@
             // CreateConfigButton
             // 
             this.CreateConfigButton.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.CreateConfigButton.Location = new System.Drawing.Point(165, 4);
+            this.CreateConfigButton.Location = new System.Drawing.Point(163, 4);
             this.CreateConfigButton.Margin = new System.Windows.Forms.Padding(2);
             this.CreateConfigButton.Name = "CreateConfigButton";
             this.CreateConfigButton.Size = new System.Drawing.Size(150, 24);
@@ -79,12 +82,12 @@
             // OutputTextBox
             // 
             this.OutputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)));
-            this.OutputTextBox.Location = new System.Drawing.Point(10, 242);
+            this.OutputTextBox.Location = new System.Drawing.Point(8, 334);
             this.OutputTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.OutputTextBox.Multiline = true;
             this.OutputTextBox.Name = "OutputTextBox";
             this.OutputTextBox.ReadOnly = true;
-            this.OutputTextBox.Size = new System.Drawing.Size(672, 1);
+            this.OutputTextBox.Size = new System.Drawing.Size(670, 0);
             this.OutputTextBox.TabIndex = 2;
             this.OutputTextBox.Visible = false;
             this.OutputTextBox.TextChanged += new System.EventHandler(this.OutputTextBox_TextChanged);
@@ -92,7 +95,7 @@
             // UninstallButton
             // 
             this.UninstallButton.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.UninstallButton.Location = new System.Drawing.Point(377, 3);
+            this.UninstallButton.Location = new System.Drawing.Point(372, 3);
             this.UninstallButton.Name = "UninstallButton";
             this.UninstallButton.Size = new System.Drawing.Size(150, 24);
             this.UninstallButton.TabIndex = 3;
@@ -103,7 +106,7 @@
             // DetailsButton
             // 
             this.DetailsButton.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.DetailsButton.Location = new System.Drawing.Point(532, 3);
+            this.DetailsButton.Location = new System.Drawing.Point(528, 3);
             this.DetailsButton.Name = "DetailsButton";
             this.DetailsButton.Size = new System.Drawing.Size(150, 24);
             this.DetailsButton.TabIndex = 4;
@@ -114,7 +117,7 @@
             // listBoxServicesAvailable
             // 
             this.listBoxServicesAvailable.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.listBoxServicesAvailable.Location = new System.Drawing.Point(10, 32);
+            this.listBoxServicesAvailable.Location = new System.Drawing.Point(8, 133);
             this.listBoxServicesAvailable.Name = "listBoxServicesAvailable";
             this.listBoxServicesAvailable.Size = new System.Drawing.Size(305, 95);
             this.listBoxServicesAvailable.TabIndex = 5;
@@ -122,15 +125,15 @@
             // listBoxServicesSelected
             // 
             this.listBoxServicesSelected.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.listBoxServicesSelected.Location = new System.Drawing.Point(377, 32);
+            this.listBoxServicesSelected.Location = new System.Drawing.Point(375, 133);
             this.listBoxServicesSelected.Name = "listBoxServicesSelected";
-            this.listBoxServicesSelected.Size = new System.Drawing.Size(305, 95);
+            this.listBoxServicesSelected.Size = new System.Drawing.Size(303, 95);
             this.listBoxServicesSelected.TabIndex = 6;
             // 
             // buttonAddService
             // 
             this.buttonAddService.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.buttonAddService.Location = new System.Drawing.Point(321, 32);
+            this.buttonAddService.Location = new System.Drawing.Point(321, 133);
             this.buttonAddService.Name = "buttonAddService";
             this.buttonAddService.Size = new System.Drawing.Size(50, 23);
             this.buttonAddService.TabIndex = 7;
@@ -141,7 +144,7 @@
             // buttonRemoveService
             // 
             this.buttonRemoveService.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.buttonRemoveService.Location = new System.Drawing.Point(321, 62);
+            this.buttonRemoveService.Location = new System.Drawing.Point(319, 162);
             this.buttonRemoveService.Name = "buttonRemoveService";
             this.buttonRemoveService.Size = new System.Drawing.Size(50, 23);
             this.buttonRemoveService.TabIndex = 8;
@@ -152,7 +155,7 @@
             // listBoxProcessesAvailable
             // 
             this.listBoxProcessesAvailable.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.listBoxProcessesAvailable.Location = new System.Drawing.Point(10, 142);
+            this.listBoxProcessesAvailable.Location = new System.Drawing.Point(8, 234);
             this.listBoxProcessesAvailable.Name = "listBoxProcessesAvailable";
             this.listBoxProcessesAvailable.Size = new System.Drawing.Size(305, 95);
             this.listBoxProcessesAvailable.TabIndex = 9;
@@ -160,15 +163,15 @@
             // listBoxProcessesSelected
             // 
             this.listBoxProcessesSelected.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.listBoxProcessesSelected.Location = new System.Drawing.Point(377, 142);
+            this.listBoxProcessesSelected.Location = new System.Drawing.Point(375, 234);
             this.listBoxProcessesSelected.Name = "listBoxProcessesSelected";
-            this.listBoxProcessesSelected.Size = new System.Drawing.Size(305, 95);
+            this.listBoxProcessesSelected.Size = new System.Drawing.Size(303, 95);
             this.listBoxProcessesSelected.TabIndex = 10;
             // 
             // buttonAddProcess
             // 
             this.buttonAddProcess.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.buttonAddProcess.Location = new System.Drawing.Point(321, 142);
+            this.buttonAddProcess.Location = new System.Drawing.Point(319, 234);
             this.buttonAddProcess.Name = "buttonAddProcess";
             this.buttonAddProcess.Size = new System.Drawing.Size(50, 23);
             this.buttonAddProcess.TabIndex = 11;
@@ -179,7 +182,7 @@
             // buttonRemoveProcess
             // 
             this.buttonRemoveProcess.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.buttonRemoveProcess.Location = new System.Drawing.Point(321, 172);
+            this.buttonRemoveProcess.Location = new System.Drawing.Point(319, 263);
             this.buttonRemoveProcess.Name = "buttonRemoveProcess";
             this.buttonRemoveProcess.Size = new System.Drawing.Size(50, 23);
             this.buttonRemoveProcess.TabIndex = 12;
@@ -187,12 +190,25 @@
             this.buttonRemoveProcess.UseVisualStyleBackColor = true;
             this.buttonRemoveProcess.Click += new System.EventHandler(this.ButtonRemoveProcess_Click);
             // 
+            // checkedListBoxCollectors
+            // 
+            this.checkedListBoxCollectors.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.checkedListBoxCollectors.CheckOnClick = true;
+            this.checkedListBoxCollectors.FormattingEnabled = true;
+            this.checkedListBoxCollectors.Location = new System.Drawing.Point(8, 33);
+            this.checkedListBoxCollectors.MultiColumn = true;
+            this.checkedListBoxCollectors.Name = "checkedListBoxCollectors";
+            this.checkedListBoxCollectors.Size = new System.Drawing.Size(670, 94);
+            this.checkedListBoxCollectors.Sorted = true;
+            this.checkedListBoxCollectors.TabIndex = 15;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(688, 243);
+            this.ClientSize = new System.Drawing.Size(684, 337);
+            this.Controls.Add(this.checkedListBoxCollectors);
             this.Controls.Add(this.buttonRemoveProcess);
             this.Controls.Add(this.buttonAddProcess);
             this.Controls.Add(this.listBoxProcessesSelected);
@@ -218,7 +234,5 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.Button button1;
     }
 }
