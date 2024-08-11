@@ -21,7 +21,7 @@ namespace PrometheusExporterInstaller
         {
             InitializeComponent();
             normalHeight = this.ClientSize.Height;
-            this.Icon = new Icon("wei.ico");
+           // this.Icon = new Icon("wei.ico");
         }
 
         private async Task DownloadAndExtractJsonPackageAsync()
