@@ -460,7 +460,7 @@ namespace PrometheusExporterInstaller
             var selectedServices = listBoxServicesSelected.Items.Cast<string>().ToList();
             var selectedProcesses = listBoxProcessesSelected.Items.Cast<string>().ToList();
 
-            var formattedServiceNames = string.Join(" OR ", selectedServices.Select(s => $"Name='{s}'"));
+            var formattedServiceNames = string.Join("|", selectedServices);
             var formattedProcessIncludes = string.Join("|", selectedProcesses);
 
             string configContent = $@"
@@ -469,7 +469,7 @@ collectors:
   enabled: {string.Join(",", selectedCollectors)}
 collector:
   service:
-    services-where: {formattedServiceNames}
+    include: ""{formattedServiceNames}""
   process:
     include: ""{formattedProcessIncludes}""
 log:
